@@ -1,0 +1,154 @@
+#include<iostream>
+#include<regex>
+using namespace std;
+
+int modFunc(int a, int b)
+{
+    int value = a%b;
+    if(value < 0)
+    {
+        value += b;
+    }
+    return value;
+}
+
+void swap(int p, int q)
+{
+    int temp;
+    temp = p;
+    p = q;
+    q = temp;
+}
+
+void findKeys()
+{
+    string cipher;
+    cout<<"Enter the cipher text: ";
+    getline(cin, cipher);
+
+    //cipher to uppercase
+    for(int i=0;i<cipher.length();i++)
+    {
+        cipher[i] = toupper(cipher[i]);
+    }
+
+    //removing white space from cipher
+    cipher = regex_replace(cipher, regex("\\s++"), "");
+    int lenCheck = 0;
+    if(cipher.length()%2 != 0)
+    {
+        cipher += "0";
+        lenCheck = 1;
+    }
+
+    //conversion of cipher to 2x cipher.length/2 matrix
+    int cipher2D[2][cipher.length()/2];
+    int ptr1 = 0, ptr2 = 0;
+    for(int i=0;i<cipher.length();i++)
+    {
+        if(i%2 == 0)
+        {
+            cipher2D[0][ptr1] = cipher[i] - 65;
+            ptr1++;
+        }
+        else{
+            cipher2D[1][ptr2] = cipher[i] - 65;
+            ptr2++;
+        }
+    }
+
+    string msg;
+    cout<<"Enter the message: ";
+    getline(cin, msg);
+
+    //msg to uppercase
+    for(int i=0;i<msg.length();i++)
+    {
+        msg[i] = toupper(msg[i]);
+    }
+
+    //removing white space from msg
+    msg = regex_replace(msg, regex("\\s++"), "");
+
+    //conversion of msg to 2x msg.length/2 matrix
+    int msg2D[2][2];
+    int ptr3 = 0;
+    for(int i=0;i<2;i++)
+    {
+        for(int j=0;j<2;j++)
+        {
+            msg2D[i][j] = msg[ptr3] - 65;
+            ptr3++;
+        }
+    }
+
+    int det = msg2D[0][0] * msg2D[1][1] - msg2D[0][1] * msg2D[1][0];
+    det = modFunc(det, 26);
+
+    //multiplicative inverse
+    int mulInv = -1;
+    for(int i=0;i<26;i++)
+    {
+        int temp = det * i;
+        if(modFunc(temp, 26) == 1)
+        {
+            mulInv = i;
+            break;
+        }
+        else
+        {
+            continue;
+        }
+    }
+
+    //adjacent matrix
+    swap(msg2D[0][0], msg2D[1][1]);
+    msg2D[0][1] *= -1;
+    msg2D[1][0] *= -1;
+    msg2D[0][1] = modFunc(msg2D[0][1], 26);
+    msg2D[1][0] = modFunc(msg2D[1][0], 26);
+
+    for(int i=0;i<2;i++)
+    {
+        for(int j=0;j<2;j++)
+        {
+            msg2D[i][j] *= mulInv;
+        }
+    }
+    for(int i=0;i<2;i++)
+    {
+        for(int j=0;j<2;j++)
+        {
+            msg2D[i][j] = modFunc(msg2D[i][j], 26);
+        }
+    }
+
+    string key = "";
+    int count = cipher.length()/2;
+    if(lenCheck == 0)
+    {
+        for(int i=0;i<count;i++)
+        {
+            int temp1 = cipher2D[0][i] * msg2D[0][0] + cipher2D[1][i] * msg2D[0][1];
+            key += (char)((temp1 % 26) + 65);
+            int temp2 = cipher2D[0][i] * msg2D[1][0] + cipher2D[1][i] * msg2D[1][1];
+            key += (char)((temp2 % 26) + 65);
+        }
+    }
+    else{
+        for(int i=0;i<count-1;i++)
+        {
+            int temp1 = cipher2D[0][i] * msg2D[0][0] + cipher2D[1][i] * msg2D[0][1];
+            key += (char)((temp1 % 26) + 65);
+            int temp2 = cipher2D[0][i] * msg2D[1][0] + cipher2D[1][i] * msg2D[1][1];
+            key += (char)((temp2 % 26) + 65);
+        }
+    }
+    cout<<"Key is: "<<key<<endl;
+}
+
+int main()
+{
+    findKeys();
+    return 0;
+}
